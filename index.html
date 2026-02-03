@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown转纯文本工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .card h2 {
+            color: #3498db;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            font-size: 1.5rem;
+        }
+        
+        .input-area {
+            grid-column: 1;
+        }
+        
+        .output-area {
+            grid-column: 2;
+        }
+        
+        @media (max-width: 768px) {
+            .input-area, .output-area {
+                grid-column: 1;
+            }
+        }
+        
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s;
+            flex-grow: 1;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        #inputText {
+            background: #f8f9fa;
+        }
+        
+        #outputText {
+            background: #f0f7ff;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        #copyBtn {
+            background: #2ecc71;
+            color: white;
+            flex-grow: 1;
+        }
+        
+        #copyBtn:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+        }
+        
+        #clearBtn {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        #clearBtn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+        }
+        
+        footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        
+        .statistics {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+            animation: fadeInOut 2s ease;
+            z-index: 1000;
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(-10px); }
+            10%, 90% { opacity: 1; transform: translateY(0); }
+        }
+        
+        .icon {
+            font-size: 18px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-exchange-alt"></i> Markdown转纯文本工具</h1>
+        </header>
+        
+        <div class="card input-area">
+            <h2><i class="fas fa-pencil-alt"></i> 输入Markdown文本</h2>
+            <textarea id="inputText" placeholder="请在这此粘贴或输入Markdown格式的文本..."></textarea>
+            <div class="button-group">
+                <button id="clearBtn">
+                    <i class="fas fa-broom"></i> 清空
+                </button>
+            </div>
+        </div>
+        
+        <div class="card output-area">
+            <h2><i class="fas fa-file-alt"></i> 输出纯文本</h2>
+            <textarea id="outputText" placeholder="转换后的纯文本..." readonly></textarea>
+            <div class="button-group">
+                <button id="copyBtn">
+                    <i class="fas fa-copy"></i> 复制到剪贴板
+                </button>
+            </div>
+            <div class="statistics">
+                <div id="charCount">字符数: 0</div>
+                <div id="lineCount">行数: 0</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="successMessage" class="success-message">
+        <i class="fas fa-check-circle"></i> 文本已成功复制到剪贴板！
+    </div>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const charCount = document.getElementById('charCount');
+        const lineCount = document.getElementById('lineCount');
+        const successMessage = document.getElementById('successMessage');
+        
+        function markdownToPlainText(markdown) {
+            if (!markdown.trim()) {
+                return '';
+            }
+            
+            const lines = markdown.split('\n');
+            const resultLines = [];
+            let inCodeBlock = false;
+            let inBlockquote = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                
+                if (line.trim().startsWith('```')) {
+                    inCodeBlock = !inCodeBlock;
+                    continue;
+                }
+                
+                if (inCodeBlock) {
+                    resultLines.push(line);
+                    continue;
+                }
+                
+                if (line.trim().startsWith('>')) {
+                    if (!inBlockquote) {
+                        inBlockquote = true;
+                    }
+                    line = line.replace(/^>\s*/, '  ');
+                } else if (inBlockquote && line.trim() === '') {
+                    inBlockquote = false;
+                } else if (inBlockquote) {
+                    inBlockquote = false;
+                }
+                
+                line = line.replace(/^#{1,6}\s+/, '');
+                line = line.replace(/\*\*(.*?)\*\*/g, '$1');
+                line = line.replace(/\*(.*?)\*/g, '$1');
+                line = line.replace(/__(.*?)__/g, '$1');
+                line = line.replace(/_(.*?)_/g, '$1');
+                line = line.replace(/`([^`]+)`/g, '$1');
+                line = line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+                line = line.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
+                
+                const unorderedMatch = line.match(/^(\s*)[*+-]\s+/);
+                if (unorderedMatch) {
+                    const indent = unorderedMatch[1];
+                    line = line.replace(/^(\s*)[*+-]\s+/, indent + '• ');
+                }
+                
+                line = line.replace(/^(\s*)\d+\.\s+/, '$1');
+                
+                if (line.match(/^\s*[-*_]{3,}\s*$/)) {
+                    line = '─'.repeat(50);
+                }
+                
+                line = line.replace(/<[^>]+>/g, '');
+                
+                resultLines.push(line);
+            }
+            
+            updateStatistics(resultLines.join('\n'));
+            
+            return resultLines.join('\n');
+        }
+        
+        function updateStatistics(text) {
+            const chars = text.length;
+            const lines = text.split('\n').length;
+            
+            charCount.textContent = `字符数: ${chars}`;
+            lineCount.textContent = `行数: ${lines}`;
+        }
+        
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            updateStatistics('');
+            inputText.focus();
+        });
+        
+        copyBtn.addEventListener('click', async () => {
+            if (!outputText.value.trim()) {
+                showMessage('没有可复制的文本！', 'error');
+                return;
+            }
+            
+            try {
+                await navigator.clipboard.writeText(outputText.value);
+                showMessage('文本已成功复制到剪贴板！', 'success');
+            } catch (err) {
+                const textArea = document.createElement('textarea');
+                textArea.value = outputText.value;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage('文本已成功复制到剪贴板！', 'success');
+            }
+        });
+        
+        function showMessage(message, type = 'success') {
+            successMessage.textContent = message;
+            successMessage.style.background = type === 'success' ? '#2ecc71' : '#e74c3c';
+            successMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 2000);
+        }
+        
+        inputText.addEventListener('input', () => {
+            const markdownContent = inputText.value;
+            const plainText = markdownToPlainText(markdownContent);
+            outputText.value = plainText;
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                copyBtn.click();
+            }
+            
+            if (e.ctrlKey && e.key === 'L') {
+                clearBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
